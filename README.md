@@ -20,7 +20,7 @@ A multi-step agentic pipeline built in n8n that processes candidate resumes agai
 ## 2. Workflow Architecture Overview
 
 ### System Canvas Diagram
-![n8n Workflow Overview](n8n WorkFlow Overview Image.png)
+![n8n Workflow Overview](n8n-WorkFlow-Overview-Image.png)
 
 ### The Core Pipeline Engine
 The workflow processes incoming data through five critical structural phases:
@@ -159,6 +159,6 @@ example@gmail.com
 
 ### Attaching Screenshots of the workflow and the results:
 
-![Mail Sample](Mail Sample.png)
-![Google Sheets Snapshot](Google Sheets Snapshot.png)
-![JS Code](JS Code.png)
+![Mail Sample](Mail-Sample.png)
+![Google Sheets Snapshot](Google-Sheets-Snapshot.png)
+![JS Code](JS-Code.png)
