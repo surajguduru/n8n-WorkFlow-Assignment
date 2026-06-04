@@ -3,7 +3,7 @@
 A multi-step agentic pipeline built in n8n that processes candidate resumes against real-world Job Descriptions (JDs). The system combines rigid, deterministic algorithmic keyword matching with contextual AI semantic reasoning to grade alignment, log tracking metrics, and distribute customized, professional HTML coaching roadmaps.
 
 ## Project Walkthrough & Live Demo
-[My Loom Submission Video](INSERT_YOUR_LOOM_VIDEO_URL_HERE)
+[My Loom Submission Video](https://drive.google.com/file/d/1Z9te1jWFgMx8_IA0HkkDKviSlsG_VQ1N/view?usp=sharing)
 
 ---
 
@@ -75,6 +75,7 @@ To maintain agentic determinism, the components exchange communication using str
   }
 }
 ```
+
 
 ### Sample Input:
 
@@ -156,6 +157,8 @@ Bachelor of Science in Computer Science State University, Graduated 2022
 
 #### Email:
 example@gmail.com
+
+
 
 ### Attaching Screenshots of the workflow and the results:
 
