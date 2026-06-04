@@ -1,0 +1,601 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "AI Job Placement & Resume Analyzer",
+        "formDescription": "Submit your target job description and current resume to get an instant match analysis.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Paste Job Description",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Your Resume Contents",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Email Id",
+              "fieldType": "email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0fa177e1-f2c4-46f5-820d-febe40c951bb",
+      "name": "On form submission",
+      "webhookId": "d04fdfa2-1347-468d-976d-9aad0777691c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f73ebbb5-c04c-49e8-8f2d-65be2890c51c",
+              "name": "jd_text",
+              "value": "={{ $json['Paste Job Description'] }}",
+              "type": "string"
+            },
+            {
+              "id": "ea467e17-5151-4c27-8657-d1dba08359d4",
+              "name": "resume_text",
+              "value": "={{ $json['Your Resume Contents'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "10d6142e-3ed8-4bc5-a476-90cfc85487fe",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1dc5b9bb-b289-4acb-95b0-80a2587873ce",
+              "leftValue": "={{ JSON.parse($json.output[0].content[0].text).fit_score }}",
+              "rightValue": 75,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1280,
+        48
+      ],
+      "id": "d285a105-e7ed-4659-b2d7-fd14e9b5cf4b",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are an elite, practical Student Career Coach. Your job is to transform raw ATS failure data into a hyper-personalized, encouraging, and actionable upskilling roadmap.\n\nTake this raw analysis data:\n{{ JSON.parse($('Resume Matcher and the Fit Score').item.json.output[0].content[0].text) }}\n\nTransform it into a valid JSON object matching the schema below exactly. \n\nCRITICAL DIRECTIVES:\n1. Do NOT wrap your response in markdown code blocks like ```json or ```. Output ONLY the raw JSON string.\n2. The \"coaching_message\" must contain exactly 4 highly specific, punchy, on-point bullet points written directly to the student. \n3. Do NOT use generic advice like \"study more.\" Look at the actual missing skills (e.g., if Docker is missing, tell them to containerize a basic project; if ML frameworks are missing, tell them to build a model using PyTorch/Scikit-Learn).\n\nFormat the coaching_message using a simple numbered format inside the string, separated by newlines (\\n), like this:\n\"1. 🎯 Focus: [Specific skill gap mapped to an actionable weekend project].\\n2. 🛠️ Action: [Exact fix for the resume bullet points].\\n3. 📚 Resource: [A concrete concept or open-source tool to look up].\\n4. 🚀 Next Step: [The exact threshold or target to hit before re-submitting].\"\n\n{\n  \"fit_score\": {{ JSON.parse($('Resume Matcher and the Fit Score').item.json.output[0].content[0].text).fit_score }},\n  \"missing_skills\": \"{{ JSON.parse($('Resume Matcher and the Fit Score').item.json.output[0].content[0].text).missing_skills.join(', ') }}\",\n  \"status\": \"Needs Review\",\n  \"coaching_message\": \"Insert the 4 personalized bullet points here.\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        272
+      ],
+      "id": "bd764c07-be73-4dfb-aae3-becc62dd5dab",
+      "name": "Feedback Formatter",
+      "credentials": {
+        "openAiApi": {
+          "id": "X02gT1MpI1Q1J1F1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are an elite Executive Career Coach. Your job is to take a highly compatible student resume and hyper-optimize it for submission, while providing brief interview preparation guidance.\n\nTake this raw analysis data:\n{{ JSON.parse($('Resume Matcher and the Fit Score').item.json.output[0].content[0].text) }}\n\nTransform it into a valid JSON object matching the schema below exactly.\n\nCRITICAL DIRECTIVES:\n1. Do NOT wrap your response in markdown code blocks like ```json or ```. Output ONLY the raw JSON string.\n2. The \"coaching_message\" must contain exactly 4 highly specific, actionable, and punchy bullet points written directly to the student. \n3. Focus on how they can highlight their strong match, tailor their summary, and prepare for technical questions based on the job description.\n\nFormat the coaching_message using a simple numbered format inside the string, separated by newlines (\\n), like this:\n\"1. Highlight: [Point out their strongest matching skill and how to lead with it].\\n2. Summary Polish: [Give them a tailored 1-sentence profile summary line incorporating core JD keywords].\\n3. Interview Focus: [Predict 1 specific technical topic or question they will likely face based on the JD].\\n4. Next Step: [Encourage them to submit their application immediately with confidence].\"\n\n{\n  \"fit_score\": {{ JSON.parse($('Resume Matcher and the Fit Score').item.json.output[0].content[0].text).fit_score }},\n  \"missing_skills\": \"None (Strong Match)\",\n  \"status\": \"Ready to Apply\",\n  \"coaching_message\": \"Insert the 4 personalized optimization points here.\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        -176
+      ],
+      "id": "c83419cc-cd52-44c1-b206-4155acf36dac",
+      "name": "Suggestion Generator",
+      "credentials": {
+        "openAiApi": {
+          "id": "X02gT1MpI1Q1J1F1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a strict information extraction assistant for a job-matching workflow. Your task is to read a job description and return only valid JSON. Do not explain your reasoning. Do not add markdown, bullets, or extra text. If a field is missing, use an empty array or null. Be precise, concise, and consistent."
+            },
+            {
+              "content": "=Extract structured data from the following job description.\n\n{{ $json.jd_text }}\n\nReturn JSON with this shape:\n{\n\"role_title\": \"\",\n\"must_have_skills\": [],\n\"nice_to_have_skills\": [],\n\"responsibilities\": [],\n\"years_experience\": null,\n\"keywords\": [],\n\"seniority_level\": \"\",\n\"location_or_work_mode\": \"\"\n}\n\nReturn only raw JSON, with double quotes around all keys and string values."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "9df9e0d9-bd5e-40b0-8d82-c0077ebfcf88",
+      "name": "Job Description Analyzer",
+      "credentials": {
+        "openAiApi": {
+          "id": "X02gT1MpI1Q1J1F1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a rigid, hybrid Applicant Tracking System (ATS) Validator. Your evaluation must anchor strictly onto the programmatic metrics provided, using precise mathematical logic for any adjustments.\n\nCRITICAL GUARDRAIL: If the incoming resume text is completely empty, a placeholder, short gibberish, or clearly lacks real project/skill context (e.g., \"John Doe | ABC | etc.\"), you MUST bypass all logic and immediately return a fit_score of 0 with all skills marked as missing.\n\nOtherwise, analyze the candidate's alignment using this verified structural data:\n- Programmatic Keyword Match Score: {{ $json.deterministic_keyword_score }}%\n- Verified Present Skills: {{ typeof $json.verified_matched_skills === 'object' ? JSON.stringify($json.verified_matched_skills) : $json.verified_matched_skills }}\n- Verified Missing Skills: {{ typeof $json.verified_missing_skills === 'object' ? JSON.stringify($json.verified_missing_skills) : $json.verified_missing_skills }}\n\nYour task is to output a single, valid JSON object matching this schema layout exactly. Do not include any markdown code block wrappers like ```json or ```.\n\nCRITICAL CALCULATED SCORING RULES:\n1. Start with the \"Programmatic Keyword Match Score\" as your absolute base score.\n2. Scan the \"Verified Missing Skills\" list. Review the user's resume text to check if they have strong, unmapped semantic equivalents (e.g., if \"Prisma\" is missing but they have \"Mongoose\", or if \"AWS\" is missing but they have deep \"Google Cloud\" or \"Azure\" infrastructure experience).\n3. For EVERY verified missing skill where you find a clear semantic equivalent, you may add exactly +5 points to the base score.\n4. ABSOLUTE CEILING CONSTRAINT: The final fit_score CANNOT exceed (Base Score + 15). You are strictly forbidden from jumping to 100 unless the math explicitly adds up to it. \n5. Update the \"missing_skills\" array to drop only the skills where you granted a semantic pass.\n\n{\n  \"fit_score\": [Insert the strictly calculated final integer here],\n  \"missing_skills\": [Insert final array of remaining critical gaps here],\n  \"fix_suggestions\": \"[Provide a brief, 1-sentence macro-level analytical summary of the primary structural resume improvement needed]\"\n}"
+            },
+            {
+              "content": "=Please evaluate the following candidate file. \n\nJob Description Requirements:\n{{ $('Job Description Analyzer').item.json.output[0].content[0].text }}\n\nCandidate Resume Content:\n{{ $('Edit Fields').item.json.resume_text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        48
+      ],
+      "id": "2095eddc-7e3f-4397-98ad-0fe8f0d74425",
+      "name": "Resume Matcher and the Fit Score",
+      "credentials": {
+        "openAiApi": {
+          "id": "X02gT1MpI1Q1J1F1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Safely extract data from upstream nodes based on your exact schema\nconst jdOutputText = $input.first().json.output[0].content[0].text;\n\n// FIXED: Extract the raw resume text string directly from the 'Edit Fields' node\nconst resumeText = ($('Edit Fields').first().json.resume_text || \"\").toLowerCase();\n\nlet jdData = {};\ntry {\n  // Parse the stringified JSON content coming from the JD Analyzer output\n  jdData = JSON.parse(jdOutputText);\n} catch (e) {\n  // Fallback in case it's already an object\n  jdData = jdOutputText;\n}\n\n// Extract and combine both skill sets into one comprehensive list\nconst mustHave = jdData.must_have_skills || [];\nconst niceToHave = jdData.nice_to_have_skills || [];\nconst requiredSkills = [...mustHave, ...niceToHave];\n\n// Create a cleanly tokenized array for strict word matching (preserving dots/dashes/slashes)\nconst cleanResumeTextForWords = resumeText.replace(/[,\\(\\)\\[\\]\\{\\}]/g, \" \");\nconst resumeWords = cleanResumeTextForWords.split(/\\s+/);\n\nconst matchedSkills = [];\nconst missingSkills = [];\n\n// 2. Flexible Matching Loop\nfor (const skill of requiredSkills) {\n  const cleanSkill = skill.trim().toLowerCase();\n  if (!cleanSkill) continue;\n\n  // Check 1: Direct substring inclusion (perfect for multi-word or special terms like \"Node.js\", \"CI/CD\")\n  if (resumeText.includes(cleanSkill)) {\n    matchedSkills.push(skill);\n    continue;\n  }\n\n  // Check 2: Word boundary array verification fallback\n  if (resumeWords.includes(cleanSkill)) {\n    matchedSkills.push(skill);\n    continue;\n  }\n\n  // Check 3: Stripped boundary check fallback (e.g., matching \"CI/CD\" if they wrote \"CI-CD\" or \"CI CD\")\n  const strippedSkill = cleanSkill.replace(/[^a-z0-9]/g, \"\");\n  const strippedResume = resumeText.replace(/[^a-z0-9]/g, \"\");\n  if (strippedSkill && strippedResume.includes(strippedSkill)) {\n    matchedSkills.push(skill);\n    continue;\n  }\n\n  // If all checks fail, the skill is genuinely missing\n  missingSkills.push(skill);\n}\n\n// 3. Compute mathematical keyword density score\nconst totalSkills = requiredSkills.length;\nconst keywordScore = totalSkills > 0 ? Math.round((matchedSkills.length / totalSkills) * 100 * 100) / 100 : 0;\n\n// 4. Return formatted data back to the pipeline\nreturn {\n  deterministic_keyword_score: keywordScore,\n  matched_skills_count: matchedSkills.length,\n  total_required_count: totalSkills,\n  verified_matched_skills: matchedSkills,\n  verified_missing_skills: missingSkills\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        32
+      ],
+      "id": "db9c478c-36b0-4bf2-bfa2-983d8c62b599",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk",
+          "mode": "list",
+          "cachedResultName": "JD-Resume Compability Checker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fit Score": "={{ JSON.parse($json.output[0].content[0].text).fit_score }}",
+            "Missing Skills": "={{ JSON.parse($json.output[0].content[0].text).missing_skills }}",
+            "Status": "={{ JSON.parse($json.output[0].content[0].text).status }}",
+            "Coaching Message": "={{ JSON.parse($json.output[0].content[0].text).coaching_message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fit Score",
+              "displayName": "Fit Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Missing Skills",
+              "displayName": "Missing Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Coaching Message",
+              "displayName": "Coaching Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        -64
+      ],
+      "id": "1c620685-8596-43e7-804f-999fe938a978",
+      "name": "Send data to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Elf4T4swbxE3aRF6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk",
+          "mode": "list",
+          "cachedResultName": "JD-Resume Compability Checker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14cXV0VbLKSLbJlGt3tse3VSMgXFs72LSFGUVXf-6iAk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fit Score": "={{ JSON.parse($json.output[0].content[0].text).fit_score }}",
+            "Missing Skills": "={{ JSON.parse($json.output[0].content[0].text).missing_skills }}",
+            "Status": "={{ JSON.parse($json.output[0].content[0].text).status }}",
+            "Coaching Message": "={{ JSON.parse($json.output[0].content[0].text).coaching_message }}"
+          },
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [
+            {
+              "id": "Fit Score",
+              "displayName": "Fit Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Missing Skills",
+              "displayName": "Missing Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Coaching Message",
+              "displayName": "Coaching Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        400
+      ],
+      "id": "bc78c7c7-1272-4382-bf64-2520a1fbe9f7",
+      "name": "Forward Feeback to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Elf4T4swbxE3aRF6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Email Id'] }}",
+        "subject": "Your Resume Analysis Report is Ready!",
+        "message": "=<div style=\"font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;\">\n  \n  <p style=\"font-size: 16px;\">Hi {{ $('On form submission').item.json[\"Name\"] }},</p>\n\n  <p style=\"font-size: 15px; color: #555555;\">\n    Thank you for submitting your resume for analysis! We ran your profile through our advanced hybrid ATS evaluation system, and we have compiled your custom optimization blueprint.\n  </p>\n\n  <div style=\"background-color: #f4f6f9; border-left: 4px solid #0052cc; padding: 15px; margin: 20px 0; border-radius: 4px;\">\n    <h3 style=\"margin-top: 0; color: #0052cc; font-size: 18px; display: flex; align-items: center;\">\n      📊 Your ATS Fit Score: {{ JSON.parse($json.output[0].content[0].text).fit_score }}%\n    </h3>\n    <p style=\"margin-bottom: 0; font-size: 14px;\">\n      <strong style=\"color: #d9383a;\">Critical Skill Gaps Identified:</strong><br>\n      <span style=\"background-color: #ffebe6; color: #c5221f; padding: 2px 6px; border-radius: 3px; font-size: 13px; display: inline-block; margin-top: 5px; font-family: monospace;\">\n        {{ $('Code in JavaScript').item.json.verified_missing_skills }}\n      </span>\n    </p>\n  </div>\n\n  <h3 style=\"color: #2c3e50; font-size: 18px; border-bottom: 1px solid #eaedd0; padding-bottom: 8px; margin-top: 25px;\">\n   Your Actionable 4-Step Upskilling Roadmap\n  </h3>\n  \n  <div style=\"white-space: pre-line; background-color: #fafbfc; border: 1px solid #e1e4e8; padding: 15px; border-radius: 6px; font-size: 14px; color: #444444; font-weight: normal;\">{{ JSON.parse($json.output[0].content[0].text).coaching_message }}</div>\n\n  <hr style=\"border: 0; border-top: 1px solid #eaedd0; margin: 30px 0;\">\n\n  <p style=\"font-size: 14px; color: #777777; line-height: 1.4;\">\n    Best of luck with your preparation!<br>\n    <strong style=\"color: #0052cc;\">Your Automated Career Coach</strong>\n  </p>\n  \n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        -288
+      ],
+      "id": "27954606-d592-44fb-8f2a-1ce5b2e30666",
+      "name": "Email Communication",
+      "webhookId": "1ead2711-f4b5-4b1a-9520-b5bd2ceacd1a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HuzPatphoiV3xgzN",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Email Id'] }}",
+        "subject": "Action Required: Your Personalized Resume Upskilling Blueprint",
+        "message": "=<div style=\"font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6;\">\n  \n  <p style=\"font-size: 16px;\">Hi,</p>\n\n  <p style=\"font-size: 15px; color: #555555;\">\n    Thank you for submitting your resume for analysis! We ran your profile through our advanced hybrid ATS evaluation system, and we have compiled your custom optimization blueprint to help you bridge the remaining gaps.\n  </p>\n\n  <div style=\"background-color: #fff9f9; border-left: 4px solid #d9383a; padding: 15px; margin: 20px 0; border-radius: 4px;\">\n    <h3 style=\"margin-top: 0; color: #c5221f; font-size: 18px; display: flex; align-items: center;\">\n      📊 Your ATS Fit Score: {{ JSON.parse($json.output[0].content[0].text).fit_score }}%\n    </h3>\n    <p style=\"margin-bottom: 0; font-size: 14px;\">\n      <strong style=\"color: #d9383a;\">Critical Skill Gaps Identified:</strong><br>\n      <span style=\"background-color: #ffebe6; color: #c5221f; padding: 4px 8px; border-radius: 3px; font-size: 13px; display: inline-block; margin-top: 5px; font-family: monospace; font-weight: bold;\">\n        {{ $('Code in JavaScript').item.json.verified_missing_skills }}\n      </span>\n    </p>\n  </div>\n\n  <h3 style=\"color: #2c3e50; font-size: 18px; border-bottom: 2px solid #e1e4e8; padding-bottom: 8px; margin-top: 25px; margin-bottom: 15px;\">\n    🛠️ Your Actionable 4-Step Upskilling Roadmap\n  </h3>\n  \n  <div style=\"white-space: pre-line; background-color: #fafbfc; border: 1px solid #e1e4e8; padding: 20px; border-radius: 6px; font-size: 14px; color: #444444; line-height: 1.8;\">{{ JSON.parse($json.output[0].content[0].text).coaching_message\n    .replace(/1\\.\\s*\\s*Highlight:/g, '<strong style=\"color: #0052cc; font-size: 15px; display: block; margin-top: 5px;\">1. Highlight:</strong>')\n    .replace(/2\\.\\s*\\s*Summary\\s*Polish:/g, '<strong style=\"color: #0052cc; font-size: 15px; display: block; margin-top: 15px;\">2. Summary Polish:</strong>')\n    .replace(/3\\.\\s*\\s*Interview\\s*Focus:/g, '<strong style=\"color: #0052cc; font-size: 15px; display: block; margin-top: 15px;\">3.  Interview Focus:</strong>')\n    .replace(/4\\.\\s*\\s*Next\\s*Step:/g, '<strong style=\"color: #0052cc; font-size: 15px; display: block; margin-top: 15px;\">4. 🚀 Next Step:</strong>') \n  }}</div>\n\n  <hr style=\"border: 0; border-top: 1px solid #eaedd0; margin: 30px 0;\">\n\n  <p style=\"font-size: 14px; color: #777777; line-height: 1.4;\">\n    Work through these changes, update your experience blocks, and feel free to resubmit your profile once optimized!<br><br>\n    Best of luck with your preparation,<br>\n    <strong style=\"color: #d9383a;\">Your Automated Career Coach</strong>\n  </p>\n  \n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        176
+      ],
+      "id": "45966f89-de61-4516-bdfa-b3395de48057",
+      "name": "Send feeback via mail",
+      "webhookId": "cf83bc6d-42d9-4e44-9160-43fda2b443cc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HuzPatphoiV3xgzN",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Job Description Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Suggestion Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Feedback Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feedback Formatter": {
+      "main": [
+        [
+          {
+            "node": "Forward Feeback to Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send feeback via mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suggestion Generator": {
+      "main": [
+        [
+          {
+            "node": "Send data to Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Communication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Description Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Matcher and the Fit Score": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Resume Matcher and the Fit Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send data to Sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "36ac9bc0-837e-4211-9e6c-4c0a7b1582ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eab6911a14e531d807200ec29a31f884f0bb31b6b4a0951db01e12ac666df313"
+  },
+  "id": "Y3p9KLuoZKiDV3ep",
+  "tags": []
+}
